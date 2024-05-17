@@ -87,6 +87,8 @@ namespace Rhyme.CodeGeneration
             {
                 case TokenType.Integer:
                     return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, Convert.ToUInt64(literalExpr.ValueToken.Value));
+                case TokenType.String:
+                    return _builder.BuildGlobalStringPtr((string)literalExpr.ValueToken.Value, $"gstr_");
                 default:
                     throw new NotImplementedException("Literal type not supported");
             }
@@ -154,6 +156,17 @@ namespace Rhyme.CodeGeneration
 
         #region Declarations
      
+        public object Visit(Node.Directive directive)
+        {
+            if (_unit.DirectedTree.ContainsKey(directive))
+            {
+                foreach(var node in _unit.DirectedTree[directive])
+                {
+                    Visit(node);
+                }
+            }
+            return null;
+        }
         public object Visit(Node.FunctionDeclaration funcDecl)
         {
             return DefineFunction(
@@ -190,6 +203,11 @@ namespace Rhyme.CodeGeneration
 
         LLVMTypeRef LLVMType(RhymeType type)
         {
+            if(type == RhymeType.Str)
+            {
+                return LLVMTypeRef.CreatePointer(LLVMTypeRef.Int8, 0);
+            }
+
             var _rhymeTypeLLVMType = new Dictionary<RhymeType, LLVMTypeRef>()
             {
                 //{ RhymeType.Void, LLVMTypeRef.Void },
@@ -243,7 +261,10 @@ namespace Rhyme.CodeGeneration
             LLVMRef func = null;
 
             func = DeclareFunction(functionType, name);
-     
+
+            if (body == null)
+                return func;
+
             // It's private linked by default
             //unsafe { LLVM.SetLinkage(func.Value, LLVMLinkage.LLVMLinkerPrivateLinkage); }
 

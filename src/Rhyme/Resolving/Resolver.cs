@@ -111,6 +111,16 @@ namespace Rhyme.Resolving
 
             return null;
         }
+
+        public object Visit(Node.FunctionCall funcCall)
+        {
+            Visit(funcCall.Callee);
+            foreach(var arg in funcCall.Arguments)
+            {
+                Visit(arg);
+            }
+            return null;
+        }
         #endregion
         #region Statements 
 

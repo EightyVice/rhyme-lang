@@ -2,6 +2,7 @@
 using Rhyme.Parsing;
 using Rhyme.Scanner;
 using System.Collections.Generic;
+using System.CommandLine.Completions;
 using System.Runtime.InteropServices.ObjectiveC;
 
 namespace Rhyme.Comptime
@@ -69,7 +70,22 @@ namespace Rhyme.Comptime
 
         Node.Type TypeFromCDecl(string cdecl)
         {
-            return new Node.IdentifierType(new Token(cdecl, TokenType.Identifier, null));
+            string rhymeType = null;
+
+            switch (cdecl)
+            {
+                case "int":
+                    rhymeType = "i64";
+                    break;
+                case "const char *":
+                    rhymeType = "str";
+                    break;
+            }
+
+            if (rhymeType == null)
+                return null;
+           
+            return new Node.IdentifierType(new Token(rhymeType, TokenType.Identifier, null));
         }
 
         public object Visit(Node.Directive directive)
@@ -83,6 +99,9 @@ namespace Rhyme.Comptime
                 {
                     if(decl is CFile.Declaration.Function declFunc)
                     {
+                        if (TypeFromCDecl(declFunc.ReturnType) == null || declFunc.Parameters.Select(p => TypeFromCDecl(p.Type)).Any(n => n == null))
+                            continue;
+
                         _evaluatedTree[directive].Add(
                             new Node.FunctionDeclaration(
                                 ReturnType: TypeFromCDecl(declFunc.ReturnType),

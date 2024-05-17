@@ -58,12 +58,13 @@ namespace Rhyme.TypeSystem
 
             public override RhymeType ApplyOperator(RhymeType rhs, Token operatorToken)
             {
-                throw new NotImplementedException();
+                return this;
             }
 
             public override string ToString() => Name;
         }
 
+        
         public class Numeric : RhymeType
         {
             public enum NumericKind
@@ -120,6 +121,8 @@ namespace Rhyme.TypeSystem
         public static readonly RhymeType I64 = new Numeric(Numeric.NumericKind.I64);
         public static readonly RhymeType F32 = new Numeric(Numeric.NumericKind.F32);
 
+        public static readonly RhymeType Str = new Reference("str");
+
         public static readonly RhymeType NoneType = new Reference("<none>");
 
         public static RhymeType FromToken(Token token)
@@ -130,6 +133,7 @@ namespace Rhyme.TypeSystem
                 case "i16": return I16;
                 case "i32": return I32;
                 case "i64": return I64;
+                case "str": return Str;
                 default: return NoneType;
             };
         }

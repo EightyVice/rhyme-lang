@@ -64,7 +64,7 @@ namespace Rhyme.TypeSystem
                 case TokenType.Integer:
                     return _typedAST[literalExpr] = RhymeType.I64;
                 case TokenType.String:
-                    return _typedAST[literalExpr] = RhymeType.NoneType;
+                    return _typedAST[literalExpr] = RhymeType.Str;
                 case TokenType.Float:
                     return _typedAST[literalExpr] = RhymeType.NoneType;
             }
@@ -101,6 +101,17 @@ namespace Rhyme.TypeSystem
 
 
         #region Declarations
+        public RhymeType Visit(Node.Directive directive)
+        {
+            if (_unit.DirectedTree.ContainsKey(directive))
+            {
+                foreach (var node in _unit.DirectedTree[directive])
+                {
+                    Visit(node);
+                }
+            }
+            return RhymeType.NoneType;
+        }
         public RhymeType Visit(Node.TopLevelDeclaration topLevelDeclaration)
         {
             return Visit(topLevelDeclaration.DeclarationNode);
@@ -178,19 +189,21 @@ namespace Rhyme.TypeSystem
                 _locals.Add(param.Identifier.Lexeme, paramType);
                 _typedAST[param] = paramType;
             }
-            foreach(var blockStmt in funcDecl.Block.ExpressionsStatements)
+            if (funcDecl.Block != null)
             {
-                if(blockStmt is Node.Return returnStmt)
+                foreach (var blockStmt in funcDecl.Block.ExpressionsStatements)
                 {
-                    var returnValueType = Visit(returnStmt.RetrunExpression);
-                    if (!returnValueType.Equals(retType))
+                    if (blockStmt is Node.Return returnStmt)
                     {
-                        Error(returnStmt.Position, $"Can't return a value of type '{returnValueType}', '{retType}' Expected");
+                        var returnValueType = Visit(returnStmt.RetrunExpression);
+                        if (!returnValueType.Equals(retType))
+                        {
+                            Error(returnStmt.Position, $"Can't return a value of type '{returnValueType}', '{retType}' Expected");
+                        }
                     }
+                    Visit(blockStmt);
                 }
-                Visit(blockStmt);
             }
-            
             var funcType = new RhymeType.Function(Visit(funcDecl.ReturnType), funcDecl.Parameters.Select(p => Visit(p.Type)).ToArray());
 
             _typedAST[funcDecl] = funcType;
