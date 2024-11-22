@@ -97,7 +97,7 @@ namespace Rhyme
                 Console.WriteLine($"Compilation done at {stopwatch.ElapsedMilliseconds}ms.");
                 Console.WriteLine("Running...\n");
                 Thread.Sleep(500);
-                Console.Clear();
+                //Console.Clear();
                 Process.Start(Parameters.ExecutableName);
             }
 

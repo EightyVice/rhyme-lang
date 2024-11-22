@@ -213,7 +213,12 @@ namespace Rhyme.Parsing
                 return FuncType();
             }
 
-            return new Node.IdentifierType(Consume(TokenType.Identifier, "Expects an identifier for type"));
+            if (PeekAll(TokenType.Identifier))
+            {
+                return new Node.IdentifierType(Consume(TokenType.Identifier, "Expects an identifier for type"));
+            }
+
+            return null;
         }
 
         private Node.FuncType FuncType()
