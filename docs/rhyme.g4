@@ -28,12 +28,17 @@ bindingDeclaration
     ;
 
 functionDeclaration
-    : type IDENTIFIER OPEN_PAREN ()? CLOSE_PAREN
+    : type IDENTIFIER OPEN_PAREN parameters? CLOSE_PAREN
     ;
 
 type
     : IDENTIFIER
+    | array_type
     | FN func_type 
+    ;
+
+array_type
+    : type OPEN_BRACKET CLOSE_BRACKET
     ;
 
 func_type
@@ -54,6 +59,17 @@ declarator
 
 expression
     : IDENTIFIER
+    | arrayExpression
+    ;
+
+arrayExpression
+    :
+    |   OPEN_BRACKET (expression (COMMA expression )*)? CLOSE_BRACKET
+    ;
+
+expressionList
+    :
+    |   expression
     ;
 
 // Lexical Rules
@@ -67,4 +83,7 @@ MODULE: 'module';
 
 OPEN_PAREN: '(';
 CLOSE_PAREN: ')';
+OPEN_BRACKET: '[';
+CLOSE_BRACKET: ']';
+COMMA: ',';
 SEMI: ';';

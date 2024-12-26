@@ -208,17 +208,27 @@ namespace Rhyme.Parsing
 
         private Node.Type Type()
         {
+            Node.Type retType = null;
+
             if (Match(TokenType.Fn)) // Function Type
             {
-                return FuncType();
+                retType =  FuncType();
             }
-
-            if (PeekAll(TokenType.Identifier))
+            else if (PeekAll(TokenType.Identifier))
             {
-                return new Node.IdentifierType(Consume(TokenType.Identifier, "Expects an identifier for type"));
+                var typeIdentifier = Consume(TokenType.Identifier, "Expects an identifier for type");
+                
+                retType =  new Node.IdentifierType(typeIdentifier);
             }
 
-            return null;
+            if (Match(TokenType.OpenBracket))
+            {
+                Consume(TokenType.CloseBracket, "Expects a ']'");
+
+                return new Node.VectorType(retType);
+            }
+
+            return retType;
         }
 
         private Node.FuncType FuncType()
@@ -337,9 +347,26 @@ namespace Rhyme.Parsing
         #region Expressions
         private Node Expression()
         {
+            if (PeekAll(TokenType.OpenBracket))
+                return ArrayExpression();
             return Assignment();
         }
 
+        private Node ArrayExpression()
+        {
+            List<Node.Expression> expressions = new();
+            Consume(TokenType.OpenBracket, "'[' Expected");
+
+            if (!PeekAll(TokenType.CloseBracket))
+            {
+                do
+                {
+                    expressions.Add((Node.Expression)Expression());
+                } while (Match(TokenType.Comma));
+            }
+            Consume(TokenType.CloseBracket, "']' Expected");
+            return new Node.Array(expressions.ToArray());
+        }
         private Node If()
         {
             Node condition = Expression();

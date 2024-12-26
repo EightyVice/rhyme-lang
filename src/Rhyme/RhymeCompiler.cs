@@ -81,7 +81,7 @@ namespace Rhyme
             var clangProcess = Process.Start(
                 new ProcessStartInfo(
                     "clang",
-                    $"{string.Join(' ', llvmfiles.ToArray())} -o {Path.GetFileName(Parameters.ExecutableName)}"
+                    $"{string.Join(' ', llvmfiles.ToArray())} -o {Path.GetFileName(Parameters.ExecutableName)} -g"
                 )
             );
             clangProcess.WaitForExit();

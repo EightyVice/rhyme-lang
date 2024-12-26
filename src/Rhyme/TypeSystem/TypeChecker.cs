@@ -1,6 +1,8 @@
 ﻿using Rhyme.Scanner;
 using Rhyme.Parsing;
 using ClangSharp;
+using System.Runtime.Serialization;
+using static Rhyme.Parsing.Node;
 
 namespace Rhyme.TypeSystem
 {
@@ -62,7 +64,7 @@ namespace Rhyme.TypeSystem
             switch (literalExpr.ValueToken.Type)
             {
                 case TokenType.Integer:
-                    return _typedAST[literalExpr] = RhymeType.I64;
+                    return _typedAST[literalExpr] = RhymeType.I32;
                 case TokenType.String:
                     return _typedAST[literalExpr] = RhymeType.Str;
                 case TokenType.Float:
@@ -91,6 +93,17 @@ namespace Rhyme.TypeSystem
 
             return result;
         }
+
+        public RhymeType Visit(Node.Assignment assignmentExpr)
+        {
+            var rhs = Visit(assignmentExpr.Assignee);
+            var lhs = Visit(assignmentExpr.Expression);
+
+            var result = lhs.ApplyOperator(rhs, new Token("=", TokenType.Equal, null));
+            _typedAST[assignmentExpr] = result;
+            return result;
+        }
+
 
         #endregion
 
@@ -165,7 +178,37 @@ namespace Rhyme.TypeSystem
                     }
                 }
             }
+            else if(bindDecl.Type is Node.VectorType vecType)
+            {
+                var type = Visit(vecType.TypeNode);
 
+                foreach (var declarator in bindDecl.Declarators)
+                {
+                    if (declarator.Initializer != null)
+                    {
+                        if(declarator.Initializer is Node.Array array)
+                        {
+                            foreach(var elem in array.Elements)
+                            {
+                                var elemType = Visit(elem);
+                                if (!elemType.Equals(type))
+                                {
+                                    Error(elem.Position, $"A type of [{elemType}] used in a vector of [{type}]");
+                                    return RhymeType.NoneType;
+                                }
+                            }
+
+                            _typedAST[declarator] = type;
+                            _typedAST[array] = new RhymeType.Vector(type);
+                            _locals[declarator.Identifier.Lexeme] = type;
+                            return new RhymeType.Vector(type);
+                        }
+
+                        Error(declarator.Initializer.Position, $"Expects an vector expression");
+                        return RhymeType.NoneType;
+                    }
+                }
+            }
             return RhymeType.NoneType;
         }
 
@@ -176,6 +219,10 @@ namespace Rhyme.TypeSystem
                 return RhymeType.FromToken(idType.Identifier);
             }
 
+            if(type is Node.VectorType vecType)
+            {
+                return Visit(vecType.TypeNode);
+            }
             return RhymeType.NoneType;
         }
         public RhymeType Visit(Node.FunctionDeclaration funcDecl)

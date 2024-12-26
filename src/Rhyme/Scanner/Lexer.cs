@@ -29,7 +29,7 @@ namespace Rhyme.Scanner
             { "extern", TokenType.Extern },
             { "module", TokenType.Module },
             { "import", TokenType.Import },
-            { "fn", TokenType.Fn },
+            { "fn",   TokenType.Fn },
             // Literals
             {"true", TokenType.True}, {"false", TokenType.False}, {"null", TokenType.Null}
         };
@@ -68,6 +68,8 @@ namespace Rhyme.Scanner
 
                     case '(': token_type = TokenType.OpenParen; break;
                     case ')': token_type = TokenType.CloseParen; break;
+                    case '[': token_type = TokenType.OpenBracket; break;
+                    case ']': token_type = TokenType.CloseBracket; break;
                     case '{': token_type = TokenType.OpenCurly; break;
                     case '}': token_type = TokenType.CloseCurly; break;
 

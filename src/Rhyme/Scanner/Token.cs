@@ -10,7 +10,7 @@ namespace Rhyme.Scanner
     {
 
         SingleQuote, DoubleQuote,
-        OpenParen, CloseParen, OpenCurly, CloseCurly,
+        OpenParen, CloseParen, OpenCurly, CloseCurly, OpenBracket, CloseBracket,
         Comma, Colon, Semicolon, BackTick, Dot,
 
         Hash, Caret, Ampersand, Percent, Dollar,

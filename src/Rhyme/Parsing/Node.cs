@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -41,6 +42,7 @@ namespace Rhyme.Parsing
             T Visit(Binary binaryExpr) => default;
             T Visit(Unary unaryExpr) => default;
             T Visit(Block blockExpr) => default;
+            T Visit(Array arrayExpr) => default;
             T Visit(FunctionCall callExpr) => default;
             T Visit(If ifStmt) => default;
             T Visit(While whileStmt) => default;
@@ -56,6 +58,7 @@ namespace Rhyme.Parsing
             T Visit(FunctionDeclaration funcDecl) => default;
             T Visit(IdentifierType identiferType) => default;
             T Visit(FuncType funcType) => default;
+            T Visit(VectorType vectorType) => default;
             T Visit(ImportStmt importStmt) => default;
             T Visit(ModuleDecl moduleDecl) => default;
             T Visit(CompilationUnit compilationUnit) {
@@ -74,24 +77,35 @@ namespace Rhyme.Parsing
         public Position Position { get; }
 
         #region Expressions
-        public record Literal(Token ValueToken) : Node
-        {
-            public Position Position => ValueToken.Position;
 
-            public T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
+        public abstract record Expression : Node
+        {
+            public virtual Position Position => Position.NonePosition;
+            public virtual T Accept<T>(IVisitor<T> visitor) => default;
+        }
+        public record Literal(Token ValueToken) : Expression
+        {
+            public override Position Position => ValueToken.Position;
+
+            public override T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
         }
 
-        public record Binary(Node Left, Token Op, Node Right) : Node
+        public record Array(Expression[] Elements) : Expression
         {
-            public Position Position => new(Left.Position.Line, Left.Position.Start, Right.Position.End);
-            public T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
+            public override Position Position => Position.NonePosition;
+            public override T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
+        }
+        public record Binary(Node Left, Token Op, Node Right) : Expression
+        {
+            public override Position Position => new(Left.Position.Line, Left.Position.Start, Right.Position.End);
+            public override T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
 
         }
 
-        public record Unary(Token Op, Node Operand) : Node
+        public record Unary(Token Op, Node Operand) : Expression
         {
-            public Position Position => new(Op.Position.Line, Operand.Position.Start, Operand.Position.End);
-            public T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
+            public override Position Position => new(Op.Position.Line, Operand.Position.Start, Operand.Position.End);
+            public override T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
 
         }
 
@@ -202,6 +216,12 @@ namespace Rhyme.Parsing
             public new T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
         }
 
+        public record VectorType(Type TypeNode) : Type
+        {
+            public new Position Position => TypeNode.Position;
+            public new T Accept<T>(IVisitor<T> visitor) => visitor.Visit(this);
+
+        }
         public record ParamDecl(Type Type, Token Identifier) : Node
         {
             public Position Position => Position.FromTo(Type.Position, Identifier.Position);

@@ -62,6 +62,8 @@ namespace Rhyme.CodeGeneration
         {
             _unit = unit;
             Errors = _errors;
+
+            DefineBuiltIns();
         }
 
         public bool HadError { get; private set; }
@@ -86,7 +88,7 @@ namespace Rhyme.CodeGeneration
             switch (literalExpr.ValueToken.Type)
             {
                 case TokenType.Integer:
-                    return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int64, Convert.ToUInt64(literalExpr.ValueToken.Value));
+                    return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, Convert.ToUInt32(literalExpr.ValueToken.Value));
                 case TokenType.String:
                     return _builder.BuildGlobalStringPtr((string)literalExpr.ValueToken.Value, $"gstr_");
                 default:
@@ -98,7 +100,7 @@ namespace Rhyme.CodeGeneration
         public object Visit(Node.Binding binding)
         {
             var bindingName = binding.Identifier.Lexeme;
-
+            
             return GetNamed(bindingName);
 
             if (_locals.ContainsKey(bindingName))
@@ -110,6 +112,14 @@ namespace Rhyme.CodeGeneration
             }
 
             throw new NotImplementedException("Binding...");
+        }
+
+        LLVMValueRef LLVMInt(int value) => LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, (ulong)value);
+        public object Visit(Node.Array array)
+        {
+            var vectorType = (RhymeType.Vector)_unit.TypedTree[array];
+            Constructs.Vector vector = new Constructs.Vector(LLVMType(vectorType.ElementType), array.Elements.Select(e => (LLVMValueRef)Visit(e)).ToArray());
+            return vector.DeclareOnHeap(_builder);
         }
         public object Visit(Node.Binary binaryExpr)
         {
@@ -126,13 +136,21 @@ namespace Rhyme.CodeGeneration
                 switch (binaryExpr.Op.Type)
                 {
                     case TokenType.Plus:
-                        return _builder.BuildAdd(lhs_val, rhs_val);
+                        return _builder.BuildAdd(lhs_val, rhs_val, "add");
                 }
             }
 
             throw new NotImplementedException("Binary");
         }
 
+        public object Visit(Node.Assignment assignmentExpr)
+        {
+            var rhs = Visit(assignmentExpr.Expression);
+         
+            var binding = _locals[((Node.Binding)assignmentExpr.Assignee).Identifier.Lexeme];
+
+            return _builder.BuildStore(LLVMRef.ToValue(rhs), binding.Value);
+        }
 
         public object Visit(Node.FunctionCall funcCall)
         {
@@ -193,7 +211,7 @@ namespace Rhyme.CodeGeneration
             {
                 Visit(topDecl);
             }
-            Debug.WriteLine(_module.ToString());
+            Console.WriteLine(_module.ToString());
             _module.Verify(LLVMVerifierFailureAction.LLVMPrintMessageAction);
             return _module.ToString();
         }
@@ -232,6 +250,10 @@ namespace Rhyme.CodeGeneration
             if(type is RhymeType.Numeric)
                 return _rhymeTypeLLVMType[type];
 
+            if(type is RhymeType.Vector vecType)
+            {
+                return LLVMTypeRef.CreatePointer(LLVMType(vecType.ElementType), 0);
+            }
             return null;
         }
 
@@ -266,8 +288,7 @@ namespace Rhyme.CodeGeneration
                 return func;
 
             // It's private linked by default
-            //unsafe { LLVM.SetLinkage(func.Value, LLVMLinkage.LLVMLinkerPrivateLinkage); }
-
+            //unsafe { LLVM.SetLinkage(func.Value, LLVMLinkage.LLVMLinkerPrivateLinkage); 
 
             _builder.PositionAtEnd(func.Value.AppendBasicBlock("entry"));
 
@@ -300,7 +321,7 @@ namespace Rhyme.CodeGeneration
                     {
                         var local_type = LLVMType(_unit.TypedTree[declarator]);
 
-                        var local_value = _builder.BuildAlloca(local_type);
+                        var local_value = _builder.BuildAlloca(local_type, declarator.Identifier.Lexeme);
                         _locals.Add(declarator.Identifier.Lexeme, new LLVMRef(local_type, local_value));
 
                         if(declarator.Initializer != null)
@@ -329,7 +350,7 @@ namespace Rhyme.CodeGeneration
             if (_locals.ContainsKey(identifier))
             {            
                 var local_ptr = _locals[identifier];
-                var load = _builder.BuildLoad2(local_ptr.Type, local_ptr.Value, $"l_{identifier}");
+                var load = _builder.BuildLoad2(local_ptr.Type, local_ptr.Value);
                 return new LLVMRef(load.TypeOf, load);
             }
             
@@ -352,8 +373,20 @@ namespace Rhyme.CodeGeneration
                 _builder.BuildCall2(_globals["printf"].Type, _globals["printf"].Value, args.ToArray(), "printf");
             });
         }
+
+        LLVMTypeRef VectorType;
         void DefineBuiltIns()
         {
+            VectorType = LLVMTypeRef.CreateStruct(
+                [
+                    LLVMTypeRef.CreatePointer(LLVMTypeRef.Int32, 0), // Pointer
+                    LLVMTypeRef.Int32, // Capacity
+                    LLVMTypeRef.Int32, // Length
+                ],
+                false
+            );
+
+            /*
             // external forward declaration for 'puts()'
             var puts = LLVMTypeRef.CreateFunction(
                 LLVMTypeRef.Int32,
@@ -372,7 +405,7 @@ namespace Rhyme.CodeGeneration
 
             _globals.Add("puts", new LLVMRef(puts, puts_value));
             _globals.Add("printf", new LLVMRef(printf, printf_value));
-
+            */
         }
 
         string DefineMangled(string name, string mangledName)

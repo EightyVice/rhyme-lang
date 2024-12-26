@@ -64,6 +64,32 @@ namespace Rhyme.TypeSystem
             public override string ToString() => Name;
         }
 
+        public class Vector : RhymeType
+        {
+            public readonly RhymeType ElementType;
+            public Vector(RhymeType ElementTypes)
+            {
+                this.ElementType = ElementTypes;
+            }
+
+            public override RhymeType ApplyOperator(RhymeType rhs, Token operatorToken)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override bool Equals(object obj)
+            {
+                if(obj is Vector vecType)
+                {
+                    if (vecType.ElementType.Equals(this.ElementType))
+                        return true;
+
+                    return false;
+                }
+
+                return false;
+            }
+        }
         
         public class Numeric : RhymeType
         {
@@ -89,6 +115,7 @@ namespace Rhyme.TypeSystem
                     case TokenType.Asterisk:
                     case TokenType.Percent:
                     case TokenType.Slash:
+                    case TokenType.Equal:
                         {
                             if (rhs is Numeric numRhs)
                                 return Max(this, numRhs);
