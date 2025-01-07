@@ -20,6 +20,7 @@ importStmt
 topLevelDeclaration
     : bindingDeclaration
     | functionDeclaration
+    | externDeclaration
     ;
 
 
@@ -31,6 +32,10 @@ functionDeclaration
     : type IDENTIFIER OPEN_PAREN parameters? CLOSE_PAREN
     ;
 
+externDeclaration
+    : EXTERN functionDeclaration
+    ; 
+    
 type
     : IDENTIFIER
     | array_type
@@ -80,6 +85,7 @@ FN:     'fn';
 GLOBAL: 'global';
 IMPORT: 'import';
 MODULE: 'module';
+EXTERN: 'extern';
 
 OPEN_PAREN: '(';
 CLOSE_PAREN: ')';

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Rhyme
 {
-    public record CommandLineValues(FileInfo[] SourceFiles, FileInfo OutputFile);
+    public record CommandLineValues(FileInfo[] SourceFiles, bool CompileOnly, FileInfo OutputFile);
 
     public static class CommandLineInterface
     {
@@ -17,12 +17,18 @@ namespace Rhyme
         {
             FileInfo[] source_files = null;
             FileInfo output_executable = null;
-
+            bool compile_only = false;
             var outputExecutableOption = new Option<FileInfo>(
                 aliases: ["-o", "--output"],
                 getDefaultValue: () => new FileInfo("program.exe"),
-                description: "Output executable file"
+                description: "Output file"
             );
+
+            var compileWithoutLinkingOption = new Option<bool>(
+                aliases: ["-c", "--compile-only"],
+                description: "Compile without linking"
+            );
+
 
             var sourceFilesArgument = new Argument<FileInfo[]>("files", "Input source files")
             {
@@ -52,6 +58,8 @@ namespace Rhyme
                     }
                 }
                 output_executable = results.GetValueForOption(outputExecutableOption);
+                compile_only = results.GetValueForOption(compileWithoutLinkingOption);
+
             });
 
             if (rootCommand.Invoke(args) != 0)
@@ -60,7 +68,7 @@ namespace Rhyme
             if (source_files == null)
                 Environment.Exit(-1);
 
-            return new CommandLineValues(source_files, output_executable);
+            return new CommandLineValues(source_files, compile_only, output_executable);
         }
     }
 }

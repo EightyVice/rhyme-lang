@@ -90,7 +90,9 @@ namespace Rhyme.CodeGeneration
                 case TokenType.Integer:
                     return LLVMValueRef.CreateConstInt(LLVMTypeRef.Int32, Convert.ToUInt32(literalExpr.ValueToken.Value));
                 case TokenType.String:
-                    return _builder.BuildGlobalStringPtr((string)literalExpr.ValueToken.Value, $"gstr_");
+                    return new Constructs.String((string)literalExpr.ValueToken.Value).DeclareOnStack(_builder);
+                case TokenType.CString:
+                    return _builder.BuildGlobalStringPtr((string)literalExpr.ValueToken.Value);
                 default:
                     throw new NotImplementedException("Literal type not supported");
             }
@@ -119,7 +121,7 @@ namespace Rhyme.CodeGeneration
         {
             var vectorType = (RhymeType.Vector)_unit.TypedTree[array];
             Constructs.Vector vector = new Constructs.Vector(LLVMType(vectorType.ElementType), array.Elements.Select(e => (LLVMValueRef)Visit(e)).ToArray());
-            return vector.DeclareOnHeap(_builder);
+            return vector.DeclareOnStack(_builder);
         }
         public object Visit(Node.Binary binaryExpr)
         {
@@ -221,7 +223,7 @@ namespace Rhyme.CodeGeneration
 
         LLVMTypeRef LLVMType(RhymeType type)
         {
-            if(type == RhymeType.Str)
+            if(type == RhymeType.Str || type == RhymeType.CStr)
             {
                 return LLVMTypeRef.CreatePointer(LLVMTypeRef.Int8, 0);
             }
@@ -254,7 +256,8 @@ namespace Rhyme.CodeGeneration
             {
                 return LLVMTypeRef.CreatePointer(LLVMType(vecType.ElementType), 0);
             }
-            return null;
+
+            throw new Exception("Unknown LLVM Type");
         }
 
 

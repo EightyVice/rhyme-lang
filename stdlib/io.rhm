@@ -2,9 +2,6 @@
 
 module io;
 
-var cio = %cinclude("stdio.h");
-
-
-global void(str txt) print = {
-    
-};
+global i32 add(i32 a, i32 b){
+    return a + b;
+}

@@ -24,6 +24,7 @@ var compiler = new RhymeCompiler();
 compiler.Parameters = new CompilerParameters
 {
     ExecutableName = console_options.OutputFile.FullName,
+    CompileOnly = console_options.CompileOnly
 };
 
 var results = compiler.CompileFromFiles(console_options.SourceFiles.Select(f => f.FullName).ToArray());

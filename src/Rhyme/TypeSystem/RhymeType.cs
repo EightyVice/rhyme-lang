@@ -149,6 +149,7 @@ namespace Rhyme.TypeSystem
         public static readonly RhymeType F32 = new Numeric(Numeric.NumericKind.F32);
 
         public static readonly RhymeType Str = new Reference("str");
+        public static readonly RhymeType CStr = new Reference("cstr");
 
         public static readonly RhymeType NoneType = new Reference("<none>");
 
@@ -161,6 +162,7 @@ namespace Rhyme.TypeSystem
                 case "i32": return I32;
                 case "i64": return I64;
                 case "str": return Str;
+                case "cstr": return CStr;
                 default: return NoneType;
             };
         }

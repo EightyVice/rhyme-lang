@@ -79,7 +79,7 @@ namespace Rhyme.Modularizing
                         Error(unit.FilePath, import.Position, $"'{importName}' is already imported");
                     }else if (!moduleExports.ContainsKey(importName))
                     {
-                        Error(unit.FilePath, import.Position, $"Module '{importName} can't be found");
+                        Error(unit.FilePath, import.Position, $"Module '{importName}' can't be found");
                     }
                 }
 

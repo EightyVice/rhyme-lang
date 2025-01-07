@@ -18,7 +18,8 @@ namespace Rhyme
 {
     public class CompilerParameters
     {
-        public string ExecutableName { get; set; } 
+        public string ExecutableName { get; set; }
+        public bool CompileOnly { get; set; }
     }
 
     public record CompilerResults(
@@ -78,18 +79,25 @@ namespace Rhyme
             }
             stopwatch.Stop();
 
+            
             var clangProcess = Process.Start(
                 new ProcessStartInfo(
-                    "clang",
-                    $"{string.Join(' ', llvmfiles.ToArray())} -o {Path.GetFileName(Parameters.ExecutableName)} -g"
+                    "clang",                                                // Program Name
+                    $"{(Parameters.CompileOnly ? "-c" : "")} " +            // Compile only without linking
+                    $"{string.Join(' ', llvmfiles.ToArray())} " +           // LLVM IR files
+                    $"rstd.lib -luser32 " +                                          // Standard Library
+                    $"-o {Path.GetFileName(Parameters.ExecutableName)} " +  // Output file
+                    $"-g"                                                   // Include debug information
                 )
             );
+
             clangProcess.WaitForExit();
 
             foreach(var llvmFile in llvmfiles)
             {
                 File.Delete(llvmFile);
             }
+            //return new CompilerResults(false, null, Parameters.ExecutableName);
 
             if (clangProcess.ExitCode == 0)
             {

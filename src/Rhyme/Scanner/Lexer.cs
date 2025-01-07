@@ -121,6 +121,18 @@ namespace Rhyme.Scanner
                     case '\'':
                         yield return String(Current);
                         continue;
+                    case 'c':
+                        Advance();
+                        if(Match('"', false) || Match('\'', false))
+                        {
+                            yield return CString(Current);
+                        }
+                        else
+                        {
+                            _pos--;
+                            yield return Identifier();
+                        }
+                        continue;
                     case '\n':
                         _line++;
                         continue;
@@ -129,6 +141,7 @@ namespace Rhyme.Scanner
                     case '\r':
                     case '\t':
                         continue;
+                    
                 }
 
                 if (token_type != TokenType.None) { 
@@ -267,6 +280,29 @@ namespace Rhyme.Scanner
             string lexeme = _source.Substring(start, _pos - start + 1);
 
             return new Token(lexeme, TokenType.String, new Position(_line, start, _pos), lexeme.Substring(1, lexeme.Length - 2));
+        }
+
+        Token CString(char stringQuote)
+        {
+            int start = _pos;
+            Advance();
+
+            while (Current != stringQuote)
+            {
+                if (AtEnd)
+                {
+                    Error(_line, start, _pos - start, "Unterminated string.");
+                    return null;
+                }
+
+                Advance();
+            }
+
+            //Advance();
+
+            string lexeme = _source.Substring(start, _pos - start + 1);
+
+            return new Token(lexeme, TokenType.CString, new Position(_line, start - 1, _pos), lexeme.Substring(1, lexeme.Length - 2));
         }
         Token Identifier()
         {

@@ -67,6 +67,8 @@ namespace Rhyme.TypeSystem
                     return _typedAST[literalExpr] = RhymeType.I32;
                 case TokenType.String:
                     return _typedAST[literalExpr] = RhymeType.Str;
+                case TokenType.CString:
+                    return _typedAST[literalExpr] = RhymeType.CStr;
                 case TokenType.Float:
                     return _typedAST[literalExpr] = RhymeType.NoneType;
             }

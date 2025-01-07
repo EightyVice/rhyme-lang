@@ -28,7 +28,7 @@ namespace Rhyme.Scanner
         Module, Import,
 
         // Literals
-        True, False, Null, Integer, Float, String,
+        True, False, Null, Integer, Float, String, CString,
 
         None,
     }

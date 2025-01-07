@@ -186,7 +186,7 @@ namespace Rhyme.Parsing
             if (PeekAll(TokenType.Identifier, TokenType.OpenParen))
             {
                 _current = revert;
-                return new Node.TopLevelDeclaration(FunctionDeclaration(), modifier);
+                return new Node.TopLevelDeclaration(FunctionDeclaration(modifier != DeclarationAccessModifier.Extern), modifier);
             }
 
             _current = revert;
@@ -195,13 +195,21 @@ namespace Rhyme.Parsing
             return new Node.TopLevelDeclaration(bindDecl, modifier);
         }
 
-        private Node.FunctionDeclaration FunctionDeclaration(){
+        private Node.FunctionDeclaration FunctionDeclaration(bool withBody){
             var ret_type = Type();
             var identifier = Consume(TokenType.Identifier, "Expects a function name");
             Consume(TokenType.OpenParen, "'(' Expected");
             var parameters = Parameters();
             Consume(TokenType.CloseParen, "')' expected after arguments.");
-            var block = Block();
+            Node.Block block = null;
+            if (withBody)
+            {
+                block = Block();
+            }
+            else
+            {
+                Consume(TokenType.Semicolon, "';' Expected");
+            }
             return new Node.FunctionDeclaration(ret_type, identifier, parameters, block);
         }
 
@@ -521,7 +529,7 @@ namespace Rhyme.Parsing
         bool MatchLiteral()
         {
             return Match(TokenType.Integer) || Match(TokenType.String) || Match(TokenType.Float)
-                || Match(TokenType.True) || Match(TokenType.False);
+                || Match(TokenType.True) || Match(TokenType.False) || Match(TokenType.CString);
         }
         // primary    : | IDENTIFIER | '(' expression ')';
         private Node Primary()
